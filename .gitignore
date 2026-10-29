@@ -1,0 +1,37 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Firebase config (per-developer, never commit)
+google-services.json
+GoogleService-Info.plist
+
+# Kotlin compiler cache
+.kotlin/
+
+# Signing keys / service accounts (never commit)
+*.jks
+*.keystore
+service-account*.json
+*-adminsdk-*.json
+
+# Firebase CLI
+.firebase/
+firebase-debug*.log
+
+# Exit-alert Worker (notifier/)
+notifier/node_modules/
+notifier/.wrangler/
+.dev.vars

@@ -1,0 +1,97 @@
+rules_version = '2';
+
+// The exit-alert service (notifier/) uses a service account and bypasses these rules;
+// everything here is about what a signed-in app user may do directly.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function groupPath(groupId) {
+      return /databases/$(database)/documents/groups/$(groupId);
+    }
+
+    function isMember(groupId) {
+      return signedIn() && request.auth.uid in get(groupPath(groupId)).data.memberIds;
+    }
+
+    // Profile + FCM token: private to the user.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // inviteCodes/{code} -> { groupId, ownerId }. Lets a non-member find a group by code.
+    match /inviteCodes/{code} {
+      // get only: you can look up a code you know, but not list all codes.
+      allow get: if signedIn();
+      // Created in the same batch as its group, by that group's owner.
+      // A code that already exists makes this an update, which is denied: codes are unique.
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && getAfter(groupPath(request.resource.data.groupId)).data.ownerId == request.auth.uid
+        && getAfter(groupPath(request.resource.data.groupId)).data.inviteCode == code;
+      allow update, delete: if false;
+    }
+
+    match /groups/{groupId} {
+      // Covers the "my groups" query (memberIds array-contains uid) and single reads.
+      allow read: if signedIn() && request.auth.uid in resource.data.memberIds;
+
+      // You can only create a group you own, are the only member of, and whose invite code
+      // doc is written in the same batch.
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.memberIds == [request.auth.uid]
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 40
+        && getAfter(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.groupId == groupId;
+
+      allow update: if signedIn() && (ownerEdit() || selfJoin());
+
+      allow delete: if false;
+
+      // Owner changes name / geofence only.
+      function ownerEdit() {
+        return resource.data.ownerId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'geofence'])
+          && (request.resource.data.geofence == null || validGeofence(request.resource.data.geofence));
+      }
+
+      // A non-member adds exactly themselves (and their display name). The group id is only
+      // discoverable through its invite code, so knowing it means you were invited.
+      function selfJoin() {
+        return !(request.auth.uid in resource.data.memberIds)
+          && resource.data.memberIds.size() < 50
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'memberNames'])
+          && request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1
+          && request.resource.data.memberIds.hasAll(resource.data.memberIds)
+          && request.auth.uid in request.resource.data.memberIds
+          && request.resource.data.memberNames.diff(resource.data.memberNames).affectedKeys().hasOnly([request.auth.uid]);
+      }
+
+      match /events/{eventId} {
+        allow read: if isMember(groupId);
+
+        // Members post their own exits only. Update is allowed for the same user so an
+        // idempotent retry (same eventId) succeeds instead of failing.
+        allow create, update: if isMember(groupId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.type == 'EXIT'
+          && request.resource.data.clientTimeMillis is int
+          && (resource == null || resource.data.userId == request.auth.uid);
+
+        allow delete: if false;
+      }
+    }
+
+    function validGeofence(g) {
+      return g.keys().hasOnly(['latitude', 'longitude', 'radiusMeters'])
+        && g.latitude is number && g.latitude >= -90 && g.latitude <= 90
+        && g.longitude is number && g.longitude >= -180 && g.longitude <= 180
+        && g.radiusMeters is number && g.radiusMeters >= 100 && g.radiusMeters <= 2000;
+    }
+  }
+}

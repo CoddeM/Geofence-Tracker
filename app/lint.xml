@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Comes from MapLibre's bundled Timber lint checks; this app uses android.util.Log. -->
+    <issue id="LogNotTimber" severity="ignore" />
+</lint>

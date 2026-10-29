@@ -1,0 +1,10 @@
+name = "geofence-exit-alerts"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Not a secret: the project id is part of every Firebase URL.
+FIREBASE_PROJECT_ID = "assignmentrahul-f381d"
+
+# FIREBASE_SERVICE_ACCOUNT is a secret. Set it with:
+#   Get-Content <path-to-key.json> -Raw | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT
