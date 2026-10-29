@@ -8,12 +8,26 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -34,15 +48,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rahul.assignmentrahul.R
+import com.rahul.assignmentrahul.ui.components.MAX_CONTENT_WIDTH
 import com.rahul.assignmentrahul.data.model.Group
 import com.rahul.assignmentrahul.domain.InviteCodeGenerator
+import com.rahul.assignmentrahul.ui.components.EmptyState
+import com.rahul.assignmentrahul.ui.components.InitialAvatar
+import com.rahul.assignmentrahul.ui.components.StatusPill
 import com.rahul.assignmentrahul.ui.components.TextInputDialog
+import com.rahul.assignmentrahul.ui.components.radiusLabel
 
-private enum class GroupsDialog { None, Create, Join }
+private enum class GroupsDialog { None, Create, Join, ConfirmSignOut }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +74,7 @@ fun GroupsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var dialog by rememberSaveable { mutableStateOf(GroupsDialog.None) }
+    var menuExpanded by remember { mutableStateOf(false) }
 
     val genericError = stringResource(R.string.error_generic)
     val invalidCode = stringResource(R.string.error_invalid_invite_code)
@@ -73,7 +94,32 @@ fun GroupsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.groups_title)) },
-                actions = { TextButton(onClick = onSignOut) { Text(stringResource(R.string.action_sign_out)) } },
+                actions = {
+                    TextButton(onClick = { dialog = GroupsDialog.Join }, enabled = !state.isSubmitting) {
+                        Text(stringResource(R.string.action_join))
+                    }
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.action_more))
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_sign_out)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    dialog = GroupsDialog.ConfirmSignOut
+                                },
+                            )
+                        }
+                    }
+                },
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { if (!state.isSubmitting) dialog = GroupsDialog.Create },
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.groups_new)) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -81,32 +127,34 @@ fun GroupsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
+                .padding(padding)
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = MAX_CONTENT_WIDTH),
+            // Extra bottom space so the FAB never covers the last card.
+            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item { TrackingPermissionsCard(onGeofencingAllowed = viewModel::onTrackingPermissionsGranted) }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(
-                        onClick = { dialog = GroupsDialog.Create },
-                        enabled = !state.isSubmitting,
-                        modifier = Modifier.weight(1f),
-                    ) { Text(stringResource(R.string.groups_create)) }
-                    OutlinedButton(
-                        onClick = { dialog = GroupsDialog.Join },
-                        enabled = !state.isSubmitting,
-                        modifier = Modifier.weight(1f),
-                    ) { Text(stringResource(R.string.groups_join)) }
-                }
-            }
             when {
-                state.isLoading -> item { CenteredContent { CircularProgressIndicator() } }
+                state.isLoading -> item {
+                    Box(Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
                 state.loadError != null -> item {
-                    CenteredContent { Text(state.loadError.orEmpty(), color = MaterialTheme.colorScheme.error) }
+                    Text(state.loadError.orEmpty(), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
                 }
                 state.groups.isEmpty() -> item {
-                    CenteredContent { Text(stringResource(R.string.groups_empty), style = MaterialTheme.typography.bodyLarge) }
+                    EmptyState(
+                        icon = Icons.Default.LocationOn,
+                        title = stringResource(R.string.groups_empty_title),
+                        message = stringResource(R.string.groups_empty_message),
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Button(onClick = { dialog = GroupsDialog.Create }) { Text(stringResource(R.string.groups_new)) }
+                            OutlinedButton(onClick = { dialog = GroupsDialog.Join }) { Text(stringResource(R.string.action_join)) }
+                        }
+                    }
                 }
                 else -> items(state.groups, key = { it.id }) { group ->
                     GroupCard(group = group, onClick = { onGroupClick(group.id) })
@@ -132,39 +180,66 @@ fun GroupsScreen(
             maxLength = InviteCodeGenerator.LENGTH,
             capitalization = KeyboardCapitalization.Characters,
         )
+        GroupsDialog.ConfirmSignOut -> AlertDialog(
+            onDismissRequest = { dialog = GroupsDialog.None },
+            title = { Text(stringResource(R.string.sign_out_confirm_title)) },
+            text = { Text(stringResource(R.string.sign_out_confirm_message)) },
+            confirmButton = {
+                TextButton(onClick = { dialog = GroupsDialog.None; onSignOut() }) {
+                    Text(stringResource(R.string.action_sign_out))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { dialog = GroupsDialog.None }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
         GroupsDialog.None -> Unit
     }
 }
 
 @Composable
 private fun GroupCard(group: Group, onClick: () -> Unit) {
+    val geofence = group.geofence
+    val members = pluralStringResource(R.plurals.member_count, group.memberIds.size, group.memberIds.size)
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(group.name, style = MaterialTheme.typography.titleMedium)
-            Text(
-                pluralStringResource(R.plurals.member_count, group.memberIds.size, group.memberIds.size),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            val geofence = group.geofence
-            Text(
-                text = if (geofence != null) {
-                    stringResource(R.string.geofence_summary_radius, geofence.radiusMeters.toInt())
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            InitialAvatar(name = group.name, size = 48.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    group.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = if (geofence != null) {
+                        stringResource(R.string.group_card_summary, members, radiusLabel(geofence.radiusMeters))
+                    } else {
+                        members
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (geofence != null) {
+                    StatusPill(
+                        text = stringResource(R.string.pill_zone_set),
+                        icon = Icons.Default.CheckCircle,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
                 } else {
-                    stringResource(R.string.geofence_not_set)
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    StatusPill(text = stringResource(R.string.pill_no_zone))
+                }
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
-}
-
-@Composable
-private fun CenteredContent(content: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
-        contentAlignment = Alignment.Center,
-    ) { content() }
 }

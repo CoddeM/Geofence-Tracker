@@ -15,10 +15,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -80,10 +86,29 @@ fun TrackingPermissionsCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.permissions_title), style = MaterialTheme.typography.titleMedium)
+            val steps = buildList {
+                add(status.preciseLocation)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) add(status.backgroundLocation)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(status.notifications)
+                add(status.locationServicesOn)
+            }
+            val done = steps.count { it }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.permissions_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    stringResource(R.string.permissions_progress, done, steps.size),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            LinearProgressIndicator(progress = { done / steps.size.toFloat() }, modifier = Modifier.fillMaxWidth())
             Text(stringResource(R.string.permissions_body), style = MaterialTheme.typography.bodyMedium)
 
             PermissionStep(
+                icon = Icons.Default.LocationOn,
                 label = stringResource(R.string.permission_precise_location),
                 granted = status.preciseLocation,
                 enabled = true,
@@ -95,6 +120,7 @@ fun TrackingPermissionsCard(
             )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 PermissionStep(
+                    icon = Icons.Default.Place,
                     label = stringResource(R.string.permission_background_location),
                     hint = stringResource(R.string.permission_background_location_hint),
                     granted = status.backgroundLocation,
@@ -107,6 +133,7 @@ fun TrackingPermissionsCard(
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 PermissionStep(
+                    icon = Icons.Default.Notifications,
                     label = stringResource(R.string.permission_notifications),
                     granted = status.notifications,
                     enabled = true,
@@ -117,6 +144,7 @@ fun TrackingPermissionsCard(
                 )
             }
             PermissionStep(
+                icon = Icons.Default.Settings,
                 label = stringResource(R.string.permission_location_services),
                 granted = status.locationServicesOn,
                 enabled = true,
@@ -128,6 +156,7 @@ fun TrackingPermissionsCard(
 
 @Composable
 private fun PermissionStep(
+    icon: ImageVector,
     label: String,
     granted: Boolean,
     enabled: Boolean,
@@ -135,6 +164,7 @@ private fun PermissionStep(
     hint: String? = null,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
         Column(Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.bodyLarge)
             if (hint != null && !granted) {

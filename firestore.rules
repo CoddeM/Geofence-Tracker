@@ -91,7 +91,7 @@ service cloud.firestore {
       return g.keys().hasOnly(['latitude', 'longitude', 'radiusMeters'])
         && g.latitude is number && g.latitude >= -90 && g.latitude <= 90
         && g.longitude is number && g.longitude >= -180 && g.longitude <= 180
-        && g.radiusMeters is number && g.radiusMeters >= 100 && g.radiusMeters <= 2000;
+        && g.radiusMeters is number && g.radiusMeters >= 10 && g.radiusMeters <= 2000;
     }
   }
 }

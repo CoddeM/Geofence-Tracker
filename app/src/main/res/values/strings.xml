@@ -1,9 +1,10 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Geofence Tracker</string>
 
     <!-- Auth -->
-    <string name="auth_sign_in_subtitle">Sign in to see your tracking groups</string>
-    <string name="auth_register_subtitle">Create an account to start a tracking group</string>
+    <string name="auth_tagline">Know the moment someone leaves the zone.</string>
+    <string name="auth_sign_in_title">Welcome back</string>
+    <string name="auth_register_title">Create your account</string>
     <string name="auth_display_name">Your name</string>
     <string name="auth_email">Email</string>
     <string name="auth_password">Password</string>
@@ -11,6 +12,8 @@
         <item quantity="one">At least %1$d character</item>
         <item quantity="other">At least %1$d characters</item>
     </plurals>
+    <string name="auth_show_password">Show</string>
+    <string name="auth_hide_password">Hide</string>
     <string name="auth_sign_in">Sign in</string>
     <string name="auth_create_account">Create account</string>
     <string name="auth_switch_to_register">New here? Create an account</string>
@@ -20,11 +23,11 @@
     <string name="action_cancel">Cancel</string>
     <string name="action_create">Create</string>
     <string name="action_join">Join</string>
-    <string name="action_save">Save</string>
-    <string name="action_allow">Allow</string>
     <string name="action_back">Back</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_share">Share</string>
+    <string name="action_more">More options</string>
     <string name="action_sign_out">Sign out</string>
-    <string name="action_share_invite">Share invite</string>
 
     <!-- Errors -->
     <string name="error_generic">Something went wrong. Please try again.</string>
@@ -34,53 +37,68 @@
 
     <!-- Groups -->
     <string name="groups_title">My groups</string>
-    <string name="groups_create">Create group</string>
-    <string name="groups_join">Join group</string>
+    <string name="groups_new">New group</string>
+    <string name="groups_create">Create a group</string>
+    <string name="groups_join">Join a group</string>
     <string name="groups_name_label">Group name</string>
-    <string name="groups_invite_code_label">Invite code</string>
-    <string name="groups_empty">No groups yet. Create one or join with an invite code.</string>
+    <string name="groups_invite_code_label">6-character invite code</string>
+    <string name="groups_empty_title">No groups yet</string>
+    <string name="groups_empty_message">Create a group and draw a zone on the map, or join a friend\'s group with their invite code.</string>
+    <string name="pill_zone_set">Zone set</string>
+    <string name="pill_no_zone">No zone</string>
     <plurals name="member_count">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
+    <string name="group_card_summary">%1$s · %2$s zone</string>
+    <string name="sign_out_confirm_title">Sign out?</string>
+    <string name="sign_out_confirm_message">This device will stop receiving alerts and stop monitoring your zones until you sign in again.</string>
 
     <!-- Permissions -->
     <string name="permissions_title">Finish tracking setup</string>
-    <string name="permissions_body">To alert your group when you leave a geofence, even while the app is closed, allow:</string>
+    <string name="permissions_body">Needed so your group is alerted when you leave a zone, even while the app is closed.</string>
+    <string name="permissions_progress" tools:ignore="PluralsCandidate">%1$d of %2$d done</string>
     <string name="permission_precise_location">Precise location</string>
     <string name="permission_background_location">Location all the time</string>
     <string name="permission_background_location_hint">On the next screen choose \"Allow all the time\"</string>
     <string name="permission_notifications">Notifications</string>
     <string name="permission_location_services">Device location turned on</string>
     <string name="permission_granted">Granted</string>
+    <string name="action_allow">Allow</string>
 
     <!-- Group detail -->
     <string name="group_detail_title">Group</string>
     <string name="group_not_found">This group isn\'t available. You may not be a member.</string>
     <string name="group_invite_code">Invite code</string>
-    <string name="group_invite_hint">Others join with \"Join group\" and this code</string>
-    <string name="group_geofence">Geofence</string>
+    <string name="group_invite_hint">Friends tap \"Join\" and enter this code.</string>
+    <string name="invite_copied">Invite code copied</string>
+    <string name="invite_clipboard_label">Invite code</string>
+    <string name="invite_share_text">Join my group \"%1$s\" in Geofence Tracker with invite code %2$s</string>
+    <string name="group_zone_title">Tracking zone</string>
+    <string name="group_zone_explainer">Everyone in the group gets a notification when a member leaves this area.</string>
+    <string name="group_zone_missing">No zone yet. The group owner draws it on the map.</string>
+    <string name="geofence_summary_full">%1$s radius · %2$.5f, %3$.5f</string>
+    <string name="geofence_set">Set zone</string>
+    <string name="geofence_edit">Edit zone</string>
+    <string name="geofence_view">View on map</string>
     <string name="group_members">Members</string>
     <string name="group_recent_exits">Recent exits</string>
     <string name="group_no_exits">No one has left the zone yet.</string>
     <string name="member_unknown">Unknown member</string>
-    <string name="member_tag_owner">owner</string>
-    <string name="member_tag_you">you</string>
+    <string name="member_tag_owner">Owner</string>
+    <string name="member_tag_you">You</string>
     <string name="exit_row_title">%1$s left the zone</string>
-    <string name="invite_share_text">Join my group \"%1$s\" in Geofence Tracker with invite code %2$s</string>
 
-    <!-- Geofence -->
-    <string name="geofence_not_set">No geofence set</string>
-    <string name="geofence_summary_radius">%1$d m radius</string>
-    <string name="geofence_summary_full">%1$d m around %2$.5f, %3$.5f</string>
-    <string name="geofence_set">Set geofence</string>
-    <string name="geofence_edit">Edit geofence</string>
-    <string name="geofence_view">View on map</string>
-    <string name="geofence_owner_only">Only the group owner can change the geofence.</string>
-    <string name="geofence_tap_hint">Tap the map to place the centre of the zone.</string>
-    <string name="geofence_adjust_hint">Tap elsewhere to move it, or drag the slider to resize.</string>
-    <string name="geofence_radius_value">Radius: %1$d m</string>
-    <string name="geofence_use_my_location">Use my location</string>
+    <!-- Geofence editor -->
+    <string name="geofence_tap_hint">Tap the map to place the zone centre</string>
+    <string name="geofence_adjust_hint">Tap elsewhere to move the zone</string>
+    <string name="geofence_radius_title">Zone radius</string>
+    <string name="geofence_small_warning">Zones under 100 m may alert late or not at all: phone GPS is often off by 10–50 m.</string>
+    <string name="geofence_use_my_location">Centre on my location</string>
+    <string name="geofence_save">Save zone</string>
+    <string name="geofence_owner_only">Only the group owner can change this zone.</string>
+    <string name="radius_meters">%1$d m</string>
+    <string name="radius_kilometers">%1$s km</string>
 
     <!-- Notifications -->
     <string name="channel_alerts_id" translatable="false">geofence_alerts</string>

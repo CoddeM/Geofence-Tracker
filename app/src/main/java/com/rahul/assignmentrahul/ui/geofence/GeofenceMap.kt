@@ -26,6 +26,7 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillLayer
 import org.maplibre.android.style.layers.LineLayer
@@ -139,7 +140,7 @@ fun GeofenceMap(
 
 private fun addGeofenceLayers(style: Style, color: Int) {
     style.addSource(GeoJsonSource(GEOFENCE_SOURCE))
-    // One source holds the circle polygon and the centre point; each layer draws what it can.
+    // One source holds the circle polygon and the centre point.
     style.addLayer(
         FillLayer("geofence-fill", GEOFENCE_SOURCE)
             .withProperties(PropertyFactory.fillColor(color), PropertyFactory.fillOpacity(0.2f))
@@ -149,12 +150,15 @@ private fun addGeofenceLayers(style: Style, color: Int) {
             .withProperties(PropertyFactory.lineColor(color), PropertyFactory.lineWidth(2f))
     )
     style.addLayer(
-        CircleLayer("geofence-center", GEOFENCE_SOURCE).withProperties(
-            PropertyFactory.circleColor(color),
-            PropertyFactory.circleRadius(6f),
-            PropertyFactory.circleStrokeColor(Color.WHITE),
-            PropertyFactory.circleStrokeWidth(2f),
-        )
+        CircleLayer("geofence-center", GEOFENCE_SOURCE)
+            .withProperties(
+                PropertyFactory.circleColor(color),
+                PropertyFactory.circleRadius(6f),
+                PropertyFactory.circleStrokeColor(Color.WHITE),
+                PropertyFactory.circleStrokeWidth(2f),
+            )
+            // A circle layer would also put a dot on every vertex of the polygon: points only.
+            .withFilter(Expression.eq(Expression.geometryType(), Expression.literal("Point")))
     )
 }
 
