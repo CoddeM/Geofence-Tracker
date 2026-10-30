@@ -36,6 +36,8 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 import org.maplibre.geojson.Polygon
+import kotlin.math.cos
+import kotlin.math.log2
 
 // Free OpenStreetMap-based vector tiles: no API key or billing account needed.
 private const val MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty"
@@ -51,19 +53,26 @@ class GeofenceMapController {
     private var map: MapLibreMap? = null
     private var pendingTarget: Coordinates? = null
 
-    fun moveTo(target: Coordinates) {
+    private var pendingRadius: Float? = null
+
+    /** Centres on [target]; with [fitRadiusMeters] it zooms so that zone fills a good part of the screen. */
+    fun moveTo(target: Coordinates, fitRadiusMeters: Float? = null) {
         val current = map
         if (current == null) {
-            pendingTarget = target // map not ready yet; apply once it is
+            // Map not ready yet; apply once it is.
+            pendingTarget = target
+            pendingRadius = fitRadiusMeters
             return
         }
-        current.animateCamera(CameraUpdateFactory.newLatLngZoom(target.toLatLng(), FOCUSED_ZOOM))
+        val zoom = fitRadiusMeters?.let { zoomToFit(target.latitude, it) } ?: FOCUSED_ZOOM
+        current.animateCamera(CameraUpdateFactory.newLatLngZoom(target.toLatLng(), zoom))
     }
 
     internal fun attach(map: MapLibreMap) {
         this.map = map
-        pendingTarget?.let { moveTo(it) }
+        pendingTarget?.let { moveTo(it, pendingRadius) }
         pendingTarget = null
+        pendingRadius = null
     }
 
     internal fun detach() {
@@ -178,3 +187,19 @@ private fun showGeofence(style: Style, center: Coordinates?, radiusMeters: Float
 }
 
 private fun Coordinates.toLatLng() = LatLng(latitude, longitude)
+
+/**
+ * Zoom level at which a circle of [radiusMeters] is about [ZONE_DIAMETER_DP] wide.
+ * At zoom z one 512-dp map tile covers the Earth's circumference * cos(latitude) / 2^z metres.
+ */
+private fun zoomToFit(latitude: Double, radiusMeters: Float): Double {
+    val metersAtZoomZero = EARTH_CIRCUMFERENCE_METERS * cos(Math.toRadians(latitude)) / TILE_SIZE_DP
+    val metersPerDpNeeded = 2 * radiusMeters / ZONE_DIAMETER_DP
+    return log2(metersAtZoomZero / metersPerDpNeeded).coerceIn(MIN_FIT_ZOOM, MAX_FIT_ZOOM)
+}
+
+private const val EARTH_CIRCUMFERENCE_METERS = 40_075_016.7
+private const val TILE_SIZE_DP = 512.0
+private const val ZONE_DIAMETER_DP = 180.0
+private const val MIN_FIT_ZOOM = 3.0
+private const val MAX_FIT_ZOOM = 19.5

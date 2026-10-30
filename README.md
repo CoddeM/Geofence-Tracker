@@ -9,6 +9,17 @@ member leaves it**, even when the app is closed.
 
 ---
 
+## Screenshots
+
+| My groups | Group detail | Zone editor |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/groups.png" width="260" alt="Groups list"> | <img src="docs/screenshots/group_detail.png" width="260" alt="Group detail with members and recent exits"> | <img src="docs/screenshots/zone_editor.png" width="260" alt="Zone editor with radius presets and slider"> |
+| Groups with zone status | Zone, invite code, members, live exit feed | Tap to place, presets, log slider, small-zone warning |
+
+**The alert another member receives** (real push, delivered about 2 s after the exit was detected):
+
+<img src="docs/screenshots/exit_alert.png" width="520" alt="Push notification: lenovo left the zone">
+
 ## How it works for a user
 
 1. **Sign up** with your name, email and password.

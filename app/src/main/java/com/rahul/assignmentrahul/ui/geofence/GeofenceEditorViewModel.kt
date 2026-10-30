@@ -36,7 +36,8 @@ data class GeofenceEditorUiState(
 }
 
 sealed interface GeofenceEditorEvent {
-    data class MoveCamera(val target: Coordinates) : GeofenceEditorEvent
+    /** [fitRadiusMeters] set = zoom so the whole zone is visible. */
+    data class MoveCamera(val target: Coordinates, val fitRadiusMeters: Float? = null) : GeofenceEditorEvent
     data object Saved : GeofenceEditorEvent
     data object LocationUnavailable : GeofenceEditorEvent
     data class ShowError(val message: String?) : GeofenceEditorEvent
@@ -112,8 +113,12 @@ class GeofenceEditorViewModel @Inject constructor(
                 )
             }
             // Start on the saved area; for a new geofence start where the user is.
-            val target = existing ?: runSuspendCatching { locationRepository.currentLocation() }.getOrNull()
-            target?.let { _events.send(GeofenceEditorEvent.MoveCamera(it)) }
+            if (existing != null) {
+                _events.send(GeofenceEditorEvent.MoveCamera(existing, fitRadiusMeters = _uiState.value.radiusMeters))
+            } else {
+                runSuspendCatching { locationRepository.currentLocation() }.getOrNull()
+                    ?.let { _events.send(GeofenceEditorEvent.MoveCamera(it)) }
+            }
         }
     }
 }

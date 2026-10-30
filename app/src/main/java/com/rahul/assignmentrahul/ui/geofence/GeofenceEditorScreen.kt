@@ -66,7 +66,7 @@ fun GeofenceEditorScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is GeofenceEditorEvent.MoveCamera -> mapController.moveTo(event.target)
+                is GeofenceEditorEvent.MoveCamera -> mapController.moveTo(event.target, event.fitRadiusMeters)
                 GeofenceEditorEvent.Saved -> onBack()
                 GeofenceEditorEvent.LocationUnavailable -> snackbarHostState.showSnackbar(locationUnavailable)
                 is GeofenceEditorEvent.ShowError -> snackbarHostState.showSnackbar(event.message ?: genericError)
